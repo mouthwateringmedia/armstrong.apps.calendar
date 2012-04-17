@@ -11,6 +11,11 @@ class Migration(SchemaMigration):
         # Adding model 'Event'
         db.create_table('calendar_event', (
             ('content_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['content.Content'], unique=True, primary_key=True)),
+            ('start_dt', self.gf('django.db.models.fields.DateTimeField')()),
+            ('end_dt', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('all_day', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('body', self.gf('django.db.models.fields.TextField')()),
+            ('series', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['calendar.Event'], null=True, blank=True)),
         ))
         db.send_create_signal('calendar', ['Event'])
 
@@ -67,7 +72,12 @@ class Migration(SchemaMigration):
         },
         'calendar.event': {
             'Meta': {'object_name': 'Event', '_ormbases': ['content.Content']},
-            'content_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['content.Content']", 'unique': 'True', 'primary_key': 'True'})
+            'all_day': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'body': ('django.db.models.fields.TextField', [], {}),
+            'content_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['content.Content']", 'unique': 'True', 'primary_key': 'True'}),
+            'end_dt': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'series': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['calendar.Event']", 'null': 'True', 'blank': 'True'}),
+            'start_dt': ('django.db.models.fields.DateTimeField', [], {})
         },
         'content.content': {
             'Meta': {'object_name': 'Content'},

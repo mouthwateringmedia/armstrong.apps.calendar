@@ -1,11 +1,12 @@
 from django.db import models
+from django.utils.translation import ugettext as _
 
 from armstrong.apps.content.models import Content
 
 class Event (Content):
-  start_date = models.DateField()
-  start_time = models.TimeField(blank=True, null=True)
-  end_time = models.TimeField(blank=True, null=True)
+  start_dt = models.DateTimeField(_('Start'))
+  end_dt = models.DateTimeField(_('End'), blank=True, null=True)
+  all_day = models.BooleanField(_('All day event'), default=False)
   
   body = models.TextField()
   
