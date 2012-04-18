@@ -39,14 +39,28 @@ class EventForm (forms.ModelForm):
   repeat_until = forms.DateTimeField(required=False, widget=widgets.AdminSplitDateTime())
   update = forms.ChoiceField(choices=UPDATE_CHOICES, initial="me", required=False, widget=UpdateDeleteSeries)
   
-  #TODO: add repeat validation
-  
+  def clean (self):
+    cleaned_data = super(EventForm, self).clean()
+    if cleaned_data.get('repeat') and cleaned_data.get('repeat') != 'none':
+      if cleaned_data.get('repeat_until'):
+        if cleaned_data.get('start_dt') and cleaned_data.get('repeat_until') <= cleaned_data.get('start_dt'):
+          self._errors["repeat_until"] = self.error_class([_('Repeat Until must be after Start.')])
+          
+      else:
+        self._errors["repeat_until"] = self.error_class([_('Repeat Until required when repeating.')])
+        
+    if cleaned_data.get('start_dt') and cleaned_data.get('end_dt'):
+      if cleaned_data.get('end_dt') <= cleaned_data.get('start_dt'):
+        self._errors["end_dt"] = self.error_class([_('End must be after Start.')])
+        
+    return cleaned_data
+    
   class Meta:
     model = Event
     
 class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
-  list_display = ('title', 'start_dt', 'end_dt', 'series', 'pub_date', 'pub_status')
-  list_filter = ('sections', 'pub_status')
+  list_display = ('title', 'start_dt', 'end_dt', 'all_day', 'series_name', 'pub_date', 'pub_status')
+  list_filter = ('sections', 'pub_status', 'all_day')
   search_fields = ('title', 'slug', 'summary', 'body')
   date_hierarchy = 'start_dt'
   
@@ -61,7 +75,7 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
       }),
       
       (_('Event Time'), {
-          'fields': (('start_dt', 'end_dt'), 'series'),
+          'fields': (('all_day', 'start_dt', 'end_dt'), 'series'),
       }),
 
       fs.TAXONOMY,
@@ -76,7 +90,7 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
       
       (_('Event Time'), {
           'fields': (
-            ('start_dt', 'end_dt'),
+            ('all_day', 'start_dt', 'end_dt'),
             ('repeat', 'repeat_until'),
             'series'
           ),

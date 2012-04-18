@@ -1,5 +1,6 @@
-from django.db.models import AutoField
+from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 
 from armstrong.core.arm_access.fields import AccessField
 from armstrong.apps.related_content.models import RelatedContent
@@ -7,7 +8,7 @@ from armstrong.apps.related_content.models import RelatedContent
 def copy_model_instance (obj):
   initial = {}
   for f in obj._meta.fields:
-    if not isinstance(f, AutoField) and not isinstance(f, AccessField) and not f in obj._meta.parents.values():
+    if not isinstance(f, models.AutoField) and not isinstance(f, AccessField) and not f in obj._meta.parents.values():
       initial[f.name] = getattr(obj, f.name)
       
   return obj.__class__(**initial)
@@ -16,11 +17,21 @@ def copy_many_to_many (obj, newobj):
   for f in obj._meta.many_to_many:
     org_m2m = getattr(obj, f.name)
     new_m2m = getattr(newobj, f.name)
-    new_m2m.clear()
     
-    for thingy in org_m2m.all():
-      new_m2m.add(thingy)
+    if isinstance(f, models.ManyToManyField):
+      new_m2m.clear()
       
+      for thingy in org_m2m.all():
+        new_m2m.add(thingy)
+        
+    elif isinstance(f, generic.GenericRelation):
+      new_m2m.clear()
+      
+      for thingy in org_m2m.all():
+        new_thingy = copy_model_instance(thingy)
+        new_thingy.content_object = newobj
+        new_thingy.save()
+        
 def copy_inlines (obj, newobj):
   #TODO: Make this more generic so it works on generic relations and normal inlines
   #Right now only works for related content
