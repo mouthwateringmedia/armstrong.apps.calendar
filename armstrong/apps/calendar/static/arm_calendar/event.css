@@ -1,0 +1,9 @@
+/* Hide Delete */
+.submit-row .deletelink-box {
+  display: none;
+}
+
+/* Hide Delete for Grappelli */
+.grp-footer .grp-delete-link-container {
+  display: none;
+}

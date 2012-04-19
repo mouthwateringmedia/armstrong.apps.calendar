@@ -15,7 +15,7 @@ class Event (Content):
   series = models.ForeignKey('self', blank=True, null=True)
   
   class Meta:
-    ordering = ('-start_dt', '-all_day', 'end_dt')
+    ordering = ('start_dt', '-all_day', 'end_dt')
     
   def series_name (self):
     if self.series:
