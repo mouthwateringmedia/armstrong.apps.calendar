@@ -246,4 +246,4 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
       
     return self.fieldsets
     
-admin.site.register(Event, EventAdmin)
+hatband.site.register(Event, EventAdmin)
