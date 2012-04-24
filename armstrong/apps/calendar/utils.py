@@ -17,11 +17,18 @@ from .models import Event
 def copy_model_instance (obj):
   initial = {}
   for f in obj._meta.fields:
-    if not isinstance(f, models.AutoField) and not isinstance(f, AccessField) and not f in obj._meta.parents.values():
+    if not isinstance(f, models.AutoField) and not isinstance(f, AccessField) and not isinstance(f, models.OneToOneField) and not f in obj._meta.parents.values():
       initial[f.name] = getattr(obj, f.name)
       
   return obj.__class__(**initial)
-
+  
+def update_attrs (obj, clone):
+  for f in obj._meta.fields:
+    if not isinstance(f, models.AutoField) and not isinstance(f, AccessField) and not isinstance(f, models.OneToOneField) and not f in obj._meta.parents.values():
+      setattr(clone, f.name, getattr(obj, f.name))
+      
+  clone.save()
+  
 def copy_many_to_many (obj, newobj):
   for f in obj._meta.many_to_many:
     org_m2m = getattr(obj, f.name)
@@ -41,18 +48,6 @@ def copy_many_to_many (obj, newobj):
         new_thingy.content_object = newobj
         new_thingy.save()
         
-def copy_inlines (obj, newobj):
-  #TODO: Make this more generic so it works on generic relations and normal inlines
-  #Right now only works for related content
-  
-  obj_type = ContentType.objects.get_for_model(obj)
-  
-  RelatedContent.objects.filter(source_type=obj_type, source_id=newobj.id).delete()
-  for related in RelatedContent.objects.filter(source_type=obj_type, source_id=obj.id):
-    new_related = copy_model_instance(related)
-    new_related.source_id = newobj.id
-    new_related.save()
-    
 class NoSeriesNestedObjects (NestedObjects):
   def __init__(self, *args, **kwargs):
     self.series = args[0]

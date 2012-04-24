@@ -7,9 +7,11 @@ from django.contrib import admin
 from django.utils.translation import ugettext as _
 from django.contrib.admin import widgets
 from django.contrib.admin.util import unquote
+from django.contrib.contenttypes.models import ContentType
 
 from armstrong.core.arm_content.admin import fieldsets as fs
 from armstrong.apps.related_content.admin import RelatedContentInline
+from armstrong.apps.related_content.models import RelatedContent
 from armstrong.core.arm_sections.admin import SectionTreeAdminMixin
 from armstrong import hatband
 
@@ -17,7 +19,7 @@ from reversion.admin import VersionAdmin
 
 from .models import Event
 from .widgets import UpdateDeleteSeries
-from .utils import copy_model_instance, copy_many_to_many, copy_inlines, \
+from .utils import copy_model_instance, copy_many_to_many, update_attrs, \
   get_deleted_objects_no_series, get_deleted_objects_series
 
 REPEAT_CHOICES = (
@@ -172,9 +174,10 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
       
   def update_series (self, request, obj, form):
     if form.cleaned_data.has_key('update') and form.cleaned_data['update'] == 'all':
-      for updobj in Event.objects.filter(series=obj.series).exclude(id=obj.id):
+      for updobj in obj.__class__.objects.filter(series=obj.series).exclude(id=obj.id):
+        update_attrs(obj, updobj)
         copy_many_to_many(obj, updobj)
-        copy_inlines(obj, updobj)
+        self.copy_inlines(obj, updobj)
         
   def save_new_series (self, request, obj, form):
     if form.cleaned_data.has_key('repeat') and form.cleaned_data['repeat'] != 'none':
@@ -235,11 +238,23 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
               
             newobj.save()
             copy_many_to_many(obj, newobj)
-            copy_inlines(obj, newobj)
+            self.copy_inlines(obj, newobj)
             
           else:
             break
           
+  def copy_inlines (self, obj, newobj):
+    #TODO: Make this more generic so it works on generic relations and normal inlines
+    #Right now only works for related content
+    
+    obj_type = ContentType.objects.get_for_model(obj)
+    
+    RelatedContent.objects.filter(source_type=obj_type, source_id=newobj.id).delete()
+    for related in RelatedContent.objects.filter(source_type=obj_type, source_id=obj.id):
+      new_related = copy_model_instance(related)
+      new_related.source_id = newobj.id
+      new_related.save()
+      
   def get_fieldsets (self, request, obj=None):
     if obj is None:
       return self.fieldsets_add
