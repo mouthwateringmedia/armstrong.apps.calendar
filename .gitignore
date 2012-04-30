@@ -1,2 +1,4 @@
 *.pyc
-
+armstrong.apps.calendar.egg-info/
+build/
+dist/
