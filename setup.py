@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "armstrong.apps.calendar",
-    version = '0.1',
+    version = '0.2',
     description = "Armstrong Calendar App.",
     url = "https://github.com/mouthwateringmedia/armstrong.apps.calendar",
     author = "Paul Bailey",

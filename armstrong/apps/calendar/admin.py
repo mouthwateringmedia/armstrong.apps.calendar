@@ -175,7 +175,7 @@ class EventAdmin (SectionTreeAdminMixin, VersionAdmin, hatband.ModelAdmin):
   def update_series (self, request, obj, form):
     if form.cleaned_data.has_key('update') and form.cleaned_data['update'] == 'all':
       for updobj in obj.__class__.objects.filter(series=obj.series).exclude(id=obj.id):
-        update_attrs(obj, updobj)
+        update_attrs(obj, updobj, ('start_dt', 'end_dt'))
         copy_many_to_many(obj, updobj)
         self.copy_inlines(obj, updobj)
         
